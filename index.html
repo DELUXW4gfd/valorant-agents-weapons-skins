@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>agents - VALORANT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      text-align: center;
+      padding: 20px;
+      background-color: #0f1923;
+      background-size: cover;
+    }
+nav {
+  background-color: #1e2a38;
+  padding: 20px; 
+  margin-bottom: 30px;
+  text-align: left;
+  font-size: 20px; 
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 30px; 
+  font-weight: bold;
+  font-size: 18px; 
+}
+
+    nav a:hover {
+      color: #ff4655;
+    }
+    h1 {
+      color: #ff4655;
+    }
+
+    .group {
+      background: #222;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: inline-block;
+      width: 250px;
+      margin: 10px;
+      padding: 20px;
+    }
+
+    .group h2 {
+      margin-top: 0;
+      color: #ff4655;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+      background-color: #1e2a38;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ff4655;
+    }
+
+    .agent-card {
+      background: #222;
+      border-radius: 15px;
+      display: inline-block;
+      width: 200px;
+      margin: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      padding: 15px;
+      text-align: center;
+      color: #ff4655;
+      vertical-align: top;
+      position: relative;
+    }
+
+    .agent-card img.portrait {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .role {
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .abilities {
+      text-align: right;
+      margin-top: 10px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+
+    .ability {
+      margin: 10px 0;
+    }
+
+    .ability img {
+      width: 30px;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+
+    .ability-title {
+      font-weight: bold;
+    }
+
+    .info-btn {
+      background-color:#45a049;
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .info-btn:hover {
+      background-color:#45a049;
+    }
+
+    .map-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin: 40px 0;
+    }
+
+    .map-card {
+      background: #222;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      width: 250px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .map-card img {
+      width: 100%;
+      height: auto;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .map-card h3 {
+      margin: 10px 0;
+      color: #ff4655;
+    }
+
+    .map-card ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0 0 15px 0;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Agents</a>
+    <a href="weapons.html">Weapons</a>
+    <a href="skins.html">skins</a>
+  </nav>
+
+  <h1>choose randoms agent/s to play with</h1>
+
+  <div class="group">
+    <h2>Duelist</h2>
+    <button onclick="pickOne('Duelist', 1)">pick agent</button>
+    <div id="result1"></div>
+  </div>
+
+  <div class="group">
+    <h2>Controller</h2>
+    <button onclick="pickOne('Controller', 2)">pick agent</button>
+    <div id="result2"></div>
+  </div>
+
+  <div class="group">
+    <h2>Sentinel</h2>
+    <button onclick="pickOne('Sentinel', 3)">pick agent</button>
+    <div id="result3"></div>
+  </div>
+
+  <div class="group">
+    <h2>Initiator</h2>
+    <button onclick="pickOne('Initiator', 4)">pick agent</button>
+    <div id="result4"></div>
+  </div>
+
+  <div class="group">
+    <h2>all types</h2>
+    <button onclick="pickOne('All', 5)">pick agent</button>
+    <div id="result5"></div>
+  </div>
+
+  <div class="group">
+    <h2>five stuck</h2>
+    <button onclick="pickFiveRandom()">pick agent</button>
+    <div id="rouletteContainer"></div>
+  </div>
+
+  <h2 style="color: aliceblue;">Recommended players by map</h2>
+  <div class="map-gallery" id="mapGallery"></div>
+
+  <h1>all agents</h1>
+  <div id="allAgents"></div>
+
+  <script>
+    const roleGroups = {
+      Duelist: [],
+      Controller: [],
+      Sentinel: [],
+      Initiator: []
+    };
+
+    let allAgentsFlat = [];
+
+    async function fetchMapsAndDisplay() {
+      const response = await fetch('https://valorant-api.com/v1/maps');
+      const data = await response.json();
+      const container = document.getElementById("mapGallery");
+
+      const mapAgents = {
+        "Ascent": ["Sova", "Killjoy", "Omen", "Jett", "Kayo"],
+        "Bind": ["Raze", "Viper", "Skye", "Brimstone", "Cypher"],
+        "Haven": ["Sova", "Omen", "Breach", "Killjoy", "Phoenix"],
+        "Icebox": ["Viper", "Sage", "Sova", "Jett", "Chamber"],
+        "Fracture": ["Breach", "Brimstone", "Raze", "Fade", "Cypher"],
+        "Pearl": ["Harbor", "Killjoy", "Skye", "Reyna", "Astra"],
+        "Lotus": ["Fade", "Omen", "Raze", "Killjoy", "Gekko"],
+        "Sunset": ["Cypher", "Viper", "Sova", "Reyna", "Yoru"]
+      };
+
+      data.data.forEach(map => {
+        const name = map.displayName;
+        const image = map.splash;
+        if (mapAgents[name]) {
+          const div = document.createElement("div");
+          div.className = "map-card";
+          div.innerHTML = `
+            <img src="${image}" alt="${name}">
+            <h3>${name}</h3>
+            <ul>
+              ${mapAgents[name].map(agent => `<li>${agent}</li>`).join('')}
+            </ul>
+          `;
+          container.appendChild(div);
+        }
+      });
+    }
+
+    fetchMapsAndDisplay();
+
+    fetch('https://valorant-api.com/v1/agents?isPlayableCharacter=true')
+      .then(response => response.json())
+      .then(data => {
+        const container = document.getElementById('allAgents');
+        data.data.forEach(agent => {
+          if (!agent.role) return;
+
+          const portrait = agent.fullPortrait || agent.displayIcon || 'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg';
+          const role = agent.role.displayName;
+
+          const agentData = {
+            name: agent.displayName,
+            image: portrait,
+            abilities: agent.abilities,
+            role: role
+          };
+
+          if (roleGroups[role]) {
+            roleGroups[role].push(agentData);
+            allAgentsFlat.push(agentData);
+          }
+
+          const card = document.createElement('div');
+          card.className = 'agent-card';
+          card.innerHTML = `
+            <img src="${portrait}" class="portrait" alt="${agent.displayName}">
+            <h2>${agent.displayName}</h2>
+            <div class="role">type: ${role}</div>
+            <button class="info-btn" onclick="toggleInfo(this)">▼ info</button>
+            <div class="abilities" style="display:none; text-align: right; margin-top: 10px;">
+              <h3>abilities:</h3>
+              ${agent.abilities.map(ability => `
+                <div class="ability">
+                  <div class="ability-title">
+                    ${ability.displayIcon ? `<img src="${ability.displayIcon}">` : ""}
+                    ${ability.displayName}
+                  </div>
+                  <div>${ability.description}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      });
+
+    function pickOne(role, resultNum) {
+      const resultEl = document.getElementById(`result${resultNum}`);
+      resultEl.innerHTML = "";
+
+      const group = role === 'All' ? allAgentsFlat : roleGroups[role];
+      if (!group || group.length === 0) {
+        resultEl.textContent = "no agents availoble";
+        return;
+      }
+
+      const chosen = group[Math.floor(Math.random() * group.length)];
+      const div = document.createElement("div");
+      div.className = "agent-card";
+      div.innerHTML = `
+        <img src="${chosen.image}" class="portrait" alt="${chosen.name}">
+        <h2>${chosen.name}</h2>
+        <div class="role">type: ${chosen.role}</div>
+        <button class="info-btn" onclick="toggleInfo(this)">▼ info</button>
+        <div class="abilities" style="display:none; text-align: right; margin-top: 10px;">
+          <h3>abilities:</h3>
+          ${chosen.abilities.map(ability => `
+            <div class="ability">
+              <div class="ability-title">
+                ${ability.displayIcon ? `<img src="${ability.displayIcon}">` : ""}
+                ${ability.displayName}
+              </div>
+              <div>${ability.description}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      resultEl.appendChild(div);
+    }
+
+    function pickFiveRandom() {
+      const container = document.getElementById("rouletteContainer");
+      container.innerHTML = "";
+
+      const duelists = [...roleGroups.Duelist];
+      const controllers = [...roleGroups.Controller];
+      const others = allAgentsFlat.filter(agent => agent.role !== 'Duelist' && agent.role !== 'Controller');
+
+      if (duelists.length === 0 || controllers.length === 0 || allAgentsFlat.length < 5) {
+        container.textContent = "not enough agents availble";
+        return;
+      }
+
+      const selected = [];
+
+      const duelist = duelists.splice(Math.floor(Math.random() * duelists.length), 1)[0];
+      const controller = controllers.splice(Math.floor(Math.random() * controllers.length), 1)[0];
+      selected.push(duelist, controller);
+
+      const usedNames = new Set([duelist.name, controller.name]);
+      const remaining = allAgentsFlat.filter(agent => !usedNames.has(agent.name));
+
+      while (selected.length < 5 && remaining.length > 0) {
+        const index = Math.floor(Math.random() * remaining.length);
+        selected.push(remaining.splice(index, 1)[0]);
+      }
+
+      selected.forEach(agent => {
+        const div = document.createElement("div");
+        div.className = "agent-card";
+        div.innerHTML = `
+          <img src="${agent.image}" class="portrait" alt="${agent.name}">
+          <h2>${agent.name}</h2>
+          <div class="role">type: ${agent.role}</div>
+          <button class="info-btn" onclick="toggleInfo(this)">▼ info</button>
+          <div class="abilities" style="display:none; text-align: right; margin-top: 10px;">
+            <h3> abilities:</h3>
+            ${agent.abilities.map(ability => `
+              <div class="ability">
+                <div class="ability-title">
+                  ${ability.displayIcon ? `<img src="${ability.displayIcon}">` : ""}
+                  ${ability.displayName}
+                </div>
+                <div>${ability.description}</div>
+              </div>
+            `).join('')}
+          </div>
+        `; 
+        container.appendChild(div);
+      });   
+    }
+
+    function toggleInfo(button) {
+      const abilitiesDiv = button.nextElementSibling;
+      if (abilitiesDiv.style.display === "none") {
+        abilitiesDiv.style.display = "block";
+        button.textContent = "▼ info";
+      } else {
+        abilitiesDiv.style.display = "none";
+        button.textContent = "▼ info";
+      }
+    }
+  </script>
+</body>
+</html>
