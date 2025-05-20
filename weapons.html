@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weapons - VALORANT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #0f1923;
+      color: white;
+    }
+
+nav {
+  background-color: #1e2a38;
+  padding: 20px; 
+  margin-bottom: 30px;
+  text-align: left;
+  font-size: 20px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 30px; 
+  font-weight: bold;
+  font-size: 18px; 
+}
+
+    nav a:hover {
+      color: #ff4655;
+    }
+
+    .weapon-card {
+      background: #222;
+      color: #ff4655;
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      width: 300px;
+      margin: 15px;
+      padding: 15px;
+      text-align: center;
+      display: inline-block;
+      vertical-align: top;
+    }
+.weapon-card p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #fff;
+}
+
+    .weapon-card img {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+
+    .stats {
+      text-align: left;
+      font-size: 14px;
+      display: none;
+      margin-top: 10px;
+    }
+
+    .stats p {
+      margin: 5px 0;
+    }
+
+    .toggle-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .toggle-btn:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Agents</a>
+    <a href="weapons.html">Weapons</a>
+     <a href="skins.html">Skins</a>
+  </nav>
+
+  <h1>Weapon List</h1>
+  <div id="weaponContainer"></div>
+
+  <script>
+    fetch('https://valorant-api.com/v1/weapons')
+      .then(response => response.json())
+      .then(data => {
+        const container = document.getElementById('weaponContainer');
+        data.data.forEach((weapon, i) => {
+          const div = document.createElement('div');
+          div.className = 'weapon-card';
+          const stats = weapon.weaponStats;
+
+          let damageStats = '';
+          if (stats && stats.damageRanges && stats.damageRanges.length > 0) {
+            stats.damageRanges.forEach((range, index) => {
+              damageStats += `
+                <p><strong>Range ${index + 1}</strong></p>
+                <p>Head Damage: ${range.headDamage}</p>
+                <p>Body Damage: ${range.bodyDamage}</p>
+                <p>Leg Damage: ${range.legDamage}</p>
+              `;
+            });
+          }
+
+          const statsId = `stats-${i}`;
+
+          div.innerHTML = `
+            <img src="${weapon.displayIcon}" alt="${weapon.displayName}">
+            <h2>${weapon.displayName}</h2>
+            <p>${weapon.shopData ? `Cost: ${weapon.shopData.cost}` : 'No cost data available'}</p>
+            <button class="toggle-btn" onclick="toggleStats('${statsId}')">Info ▼</button>
+            <div class="stats" id="${statsId}">
+              ${stats ? `
+                <p>Fire Rate: ${stats.fireRate}</p>
+                <p>Magazine Size: ${stats.magazineSize}</p>
+                <p>Reload Time: ${stats.reloadTimeSeconds} s</p>
+                <p>First Bullet Accuracy: ${stats.firstBulletAccuracy}</p>
+                <p>Equip Time: ${stats.equipTimeSeconds} s</p>
+                <p>ADS Fire Rate: ${stats.adsStats?.fireRate ?? 'N/A'}</p>
+                <p>ADS Zoom: ${stats.adsStats?.zoomMultiplier ? stats.adsStats.zoomMultiplier + 'x' : 'N/A'}</p>
+                ${damageStats}
+              ` : 'No statistics available'}
+            </div>
+          `;
+
+          container.appendChild(div);
+        });
+      });
+
+    function toggleStats(id) {
+      const statsEl = document.getElementById(id);
+      statsEl.style.display = statsEl.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>
